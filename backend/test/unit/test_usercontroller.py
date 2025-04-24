@@ -10,7 +10,7 @@ def usercontroller_return_user():
     return usercontroller
 
 @pytest.fixture
-def usercontroller_return_multible_users():
+def usercontroller_return_multiple_users():
     dao = MagicMock()
     dao.find.return_value = [{ "_id": "1", "email": "ahmad@asili.com", "firstName": "Ahmad", "lastName": "Asili" }, { "_id": "2", "email": "ahmad@asili.com", "firstName": "Ahmad", "lastName": "Asili" }]
     usercontroller = UserController(dao=dao)
@@ -36,23 +36,25 @@ def test_get_user_by_email(usercontroller_return_user):
 
     assert user == { "_id": "1", "email": "ahmad@asili.com", "firstName": "Ahmad", "lastName": "Asili" }
 
-def test_get_user_by_invalid_email(usercontroller_return_user):
-
+def test_get_user_by_invalid_email_missing_domain(usercontroller_return_user):
     with pytest.raises(ValueError):
         usercontroller_return_user.get_user_by_email('not_excist')
 
+def test_get_user_by_invalid_email_missing_tld(usercontroller_return_user):
     with pytest.raises(ValueError):
         usercontroller_return_user.get_user_by_email('not_excist@gmail')
 
+def test_get_user_by_invalid_email_invalid_tld(usercontroller_return_user):
     with pytest.raises(ValueError):
         usercontroller_return_user.get_user_by_email('not_excist@gmail.')
 
+def test_get_user_by_invalid_email_missing_username(usercontroller_return_user):
     with pytest.raises(ValueError):
         usercontroller_return_user.get_user_by_email('@gmail.com')
 
 
-def test_get_user_dublicated(usercontroller_return_multible_users):
-    user = usercontroller_return_multible_users.get_user_by_email("ahmad@asili.com")
+def test_get_user_dublicated(usercontroller_return_multiple_users):
+    user = usercontroller_return_multiple_users.get_user_by_email("ahmad@asili.com")
     assert user == { "_id": "1", "email": "ahmad@asili.com", "firstName": "Ahmad", "lastName": "Asili" }
 
 def test_get_user_not_found(usercontroller_return_none):
