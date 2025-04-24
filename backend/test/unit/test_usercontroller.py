@@ -26,7 +26,7 @@ def usercontroller_return_exception():
 @pytest.fixture
 def usercontroller_return_none():
     dao = MagicMock()
-    dao.find.return_value = [None]
+    dao.find.return_value = []
     usercontroller = UserController(dao=dao)
     return usercontroller
 
@@ -59,7 +59,7 @@ def test_get_user_dublicated(usercontroller_return_multiple_users):
 
 def test_get_user_not_found(usercontroller_return_none):
     user = usercontroller_return_none.get_user_by_email("notffffound@asili.com")
-    assert user == None
+    assert user is None
 
 def test_get_user_exeption(usercontroller_return_exception):
     with pytest.raises(Exception):
