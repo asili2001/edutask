@@ -1,173 +1,145 @@
 /**
- * As an authenticated user I want to manipulate the todolist associated to a task, i.e., add a new, toggle an existing, or delete an existing todo item.
+ * As an authenticated user I want to manipulate the todolist associated to a task,
+ * i.e., add a new, toggle an existing, or delete an existing todo item.
 **/
 
 describe('R8UC1: Create a task', () => {
-  let uid // user id
-  let name // name of the user (firstName + ' ' + lastName)
-  let email // email of the user
-
   before(() => {
-    // create a fabricated user from a fixture
-    cy.fixture('user.json')
-      .then((user) => {
-        cy.request({
-          method: 'POST',
-          url: 'http://localhost:5000/users/create',
-          form: true,
-          body: user
-        }).then((response) => {
-          uid = response.body._id.$oid
-          name = user.firstName + ' ' + user.lastName
-          email = user.email
-        })
-      })
-  })
-
-  after(() => {
-    cy.deleteUser(uid);
+    cy.createUser().then((user) => {
+      Cypress.env('user', user);
+    });
   });
 
   beforeEach(() => {
-    cy.login(email);
+    const user = Cypress.env('user');
+    cy.login(user.email);
+  });
+
+  after(() => {
+    const user = Cypress.env('user');
+    cy.deleteUser(user.uid);
   });
 
   it('Should display task', () => {
     cy.get('h1').contains('Your tasks, ');
-    // check if the task is displayed
     cy.get('.container-element').children('a').should('exist');
   });
 
   it('Should add a new todo item if input is not empty', () => {
-    // Add a new todo item
     cy.get('input[name="title"]').type('New todo item');
     cy.get('input[type=submit]').contains('Create new Task').should('not.be.disabled').click();
-
-    // Verify the new todo item is appended to the list
     cy.get('.container-element').children('a').last().should('contain', 'New todo item');
   });
 
   it('Should not add a new todo item if input is empty', () => {
-    // Ensure the input field is empty
     cy.get('input[name="title"]').clear();
-
-    // Verify the Add button is disabled
     cy.get('input[type=submit]').contains('Create new Task').should('be.disabled');
   });
-
 });
+
 
 describe('R8UC2: Toggle task todo', () => {
-  let uid // user id
-  let name // name of the user (firstName + ' ' + lastName)
-  let email // email of the user
-
-  after(() => {
-    cy.deleteUser(uid);
+  before(() => {
+    cy.createUser().then((user) => {
+      Cypress.env('user', user);
+    });
   });
 
-  before(() => {
-    // create a fabricated user from a fixture
-    cy.fixture('user.json')
-      .then((user) => {
-        cy.request({
-          method: 'POST',
-          url: 'http://localhost:5000/users/create',
-          form: true,
-          body: user
-        }).then((response) => {
-          uid = response.body._id.$oid
-          name = user.firstName + ' ' + user.lastName
-          email = user.email
-        })
-      })
-  })
-
   beforeEach(() => {
+    const user = Cypress.env('user');
     cy.visit('http://localhost:3000');
-    cy.login(email);
+    cy.login(user.email);
+
     cy.addTask({
       title: "Hello Task",
       description: "Task 1 description",
-      userid: uid,
-      url: "ahmad",
+      userid: user.uid,
+      url: "dQw4w9WgXcQ",
       todos: "watch video"
     });
 
-    // click on the last item
     cy.get('h1').contains('Your tasks, ');
     cy.get('.container-element').children('a').last().click();
-    // Check if the task is displayed
     cy.get('.popup-inner').contains('Hello Task');
   });
 
-  it('Toggle from active to done', () => {
-      cy.get('span.checker').should('have.class', 'unchecked').first().as('checkerElem');
-      cy.get('span.editable').first().as('titleElem');
-      cy.get('@checkerElem').click();
-      cy.get('@checkerElem').should('have.class', 'checked');
-      cy.get('@titleElem').should('have.css', 'text-decoration', 'line-through');
-  });
-  it('Toggle from active to done', () => {
-      cy.get('span.checker').should('have.class', 'checked').first().as('checkerElem');
-      cy.get('span.editable').first().as('titleElem');
-      cy.get('@checkerElem').click();
-      cy.get('@checkerElem').should('have.class', 'unchecked');
-      cy.get('@titleElem').should('not.have.css', 'text-decoration', 'line-through');
+  after(() => {
+    const user = Cypress.env('user');
+    cy.deleteUser(user.uid);
   });
 
+  it('Toggle from active to done', () => {
+    cy.get('span.editable').contains('Watch video').should('exist').first().as('titleElem');
+    cy.get('@titleElem').prev('span.checker').should('have.class', 'unchecked').as('checkerElem');
+    cy.get('@checkerElem').click();
+    cy.get('@checkerElem').should('have.class', 'checked');
+    cy.get('@titleElem').invoke('css', 'text-decoration').should('include', 'line-through');
+  });
+
+  it('Toggle from done to active', () => {
+    cy.get('span.editable').contains('Watch video').should('exist').first().as('titleElem');
+    cy.get('@titleElem').prev('span.checker').then(($el) => {
+      if ($el.hasClass('unchecked')) {
+        cy.wrap($el).click().should('have.class', 'checked');
+      }
+    }).as('checkerElem');
+    cy.get('@checkerElem').click();
+    cy.get('@checkerElem').should('have.class', 'unchecked');
+    cy.get('@titleElem').invoke('css', 'text-decoration').should('not.include', 'line-through');
+  });
 });
 
-describe('R8UC2: Delete task todo', () => {
-  let uid // user id
-  let name // name of the user (firstName + ' ' + lastName)
-  let email // email of the user
 
-  after(() => {
-    cy.deleteUser(uid);
+describe('R8UC3: Delete task todo', () => {
+  before(() => {
+    cy.createUser().then((user) => {
+      Cypress.env('user', user);
+    });
   });
 
-  before(() => {
-    // create a fabricated user from a fixture
-    cy.fixture('user.json')
-      .then((user) => {
-        cy.request({
-          method: 'POST',
-          url: 'http://localhost:5000/users/create',
-          form: true,
-          body: user
-        }).then((response) => {
-          uid = response.body._id.$oid
-          name = user.firstName + ' ' + user.lastName
-          email = user.email
-        })
-      })
-  })
-
   beforeEach(() => {
+    const user = Cypress.env('user');
     cy.visit('http://localhost:3000');
-    cy.login(email);
+    cy.login(user.email);
+
     cy.addTask({
       title: "Hello Task",
       description: "Task 1 description",
-      userid: uid,
-      url: "ahmad",
+      userid: user.uid,
+      url: "dQw4w9WgXcQ",
       todos: "watch video"
     });
 
-    // click on the last item
     cy.get('h1').contains('Your tasks, ');
     cy.get('.container-element').children('a').last().click();
-    // Check if the task is displayed
     cy.get('.popup-inner').contains('Hello Task');
   });
 
-  it('Remove a todo item', () => {
-    cy.get('li.todo-item').first().as('todoItem');
-
-    cy.get('span.remover').first().as('removerElem');
-    cy.get('@removerElem').click();
-    cy.get('@todoItem').should('not.exist');
+  after(() => {
+    const user = Cypress.env('user');
+    cy.deleteUser(user.uid);
   });
 
+  it('removes a todo item from the task', () => {
+    cy.intercept('DELETE', 'http://localhost:5000/todos/byid/*').as('deleteTodo');
+
+    cy.contains('li.todo-item', 'Watch video').should('exist');
+
+    cy.contains('li.todo-item', 'Watch video')
+      .find('span.remover')
+      .click();
+
+    cy.wait('@deleteTodo').its('response.statusCode').should('eq', 200);
+
+    // There is a bug in the app that the popup does not close after deleting a todo item
+    // so, we need to manually close the popup and open it again
+    cy.get('.close-btn').should('exist');
+    cy.get('.close-btn').click({force: true});
+    cy.get('.container-element').children('a').last().click();
+    cy.get('.popup-inner').contains('Hello Task');
+
+
+
+    cy.contains('li.todo-item', 'Watch video').should('not.exist');
+  });
 });

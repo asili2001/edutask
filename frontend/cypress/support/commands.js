@@ -40,6 +40,25 @@ Cypress.Commands.add('deleteUser', uid => {
     });;
 });
 
+Cypress.Commands.add('createUser', () => {
+  return cy.fixture('user.json').then((user) => {
+    return cy.request({
+      method: 'POST',
+      url: 'http://localhost:5000/users/create',
+      form: true,
+      body: user
+    }).then((response) => {
+      const newUser = {
+        uid: response.body._id.$oid,
+        name: user.firstName + ' ' + user.lastName,
+        email: user.email
+      };
+      return cy.wrap(newUser);
+    });
+  });
+});
+
+
 
 Cypress.Commands.add('addTask', task => {
     cy.get('input[name="title"]').type(task.title);
