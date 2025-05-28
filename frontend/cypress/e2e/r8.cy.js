@@ -131,14 +131,7 @@ describe('R8UC3: Delete task todo', () => {
 
     cy.wait('@deleteTodo').its('response.statusCode').should('eq', 200);
 
-    // There is a bug in the app that the popup does not close after deleting a todo item
-    // so, we need to manually close the popup and open it again
-    cy.get('.close-btn').should('exist');
-    cy.get('.close-btn').click({force: true});
-    cy.get('.container-element').children('a').last().click();
     cy.get('.popup-inner').contains('Hello Task');
-
-
 
     cy.contains('li.todo-item', 'Watch video').should('not.exist');
   });
