@@ -65,3 +65,13 @@ Cypress.Commands.add('addTask', task => {
     cy.get('input[name="url"]').type(task.url);
     cy.get('input[type="submit"]').contains('Create new Task').click();
 })
+
+Cypress.Commands.add('addTodo', todo => {
+    cy.get('.todo-list').get('.inline-form').first().as("todoForm");
+    if (todo.title === null || todo.title === "") {
+      cy.get('@todoForm').find('input[type="submit"]').disabled();
+      return;
+    }
+    cy.get('@todoForm').find('input[type="text"]').type(todo.title);
+    cy.get('@todoForm').find('input[type="submit"]').contains('Add').click();
+})

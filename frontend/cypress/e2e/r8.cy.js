@@ -3,7 +3,7 @@
  * i.e., add a new, toggle an existing, or delete an existing todo item.
 **/
 
-describe('R8UC1: Create a task', () => {
+describe('R8UC1: Create a todo', () => {
   before(() => {
     cy.createUser().then((user) => {
       Cypress.env('user', user);
@@ -12,7 +12,19 @@ describe('R8UC1: Create a task', () => {
 
   beforeEach(() => {
     const user = Cypress.env('user');
+    cy.visit('http://localhost:3000');
     cy.login(user.email);
+
+    cy.addTask({
+      title: "Hello Task",
+      description: "Task 1 description",
+      userid: user.uid,
+      url: "dQw4w9WgXcQ"
+    });
+
+    cy.get('h1').contains('Your tasks, ');
+    cy.get('.container-element').children('a').last().click();
+    cy.get('.popup-inner').contains('Hello Task');
   });
 
   after(() => {
@@ -20,20 +32,27 @@ describe('R8UC1: Create a task', () => {
     cy.deleteUser(user.uid);
   });
 
-  it('Should display task', () => {
-    cy.get('h1').contains('Your tasks, ');
-    cy.get('.container-element').children('a').should('exist');
-  });
-
-  it('Should add a new todo item if input is not empty', () => {
-    cy.get('input[name="title"]').type('New todo item');
-    cy.get('input[type=submit]').contains('Create new Task').should('not.be.disabled').click();
-    cy.get('.container-element').children('a').last().should('contain', 'New todo item');
+  it('Should have initial todo', () => {
+    cy.get('.todo-list').first().get('.todo-item').as("todoItems");
+    cy.get('@todoItems').should('have.length', 1);
+    cy.get('@todoItems').first().should('contain', 'Watch video');
   });
 
   it('Should not add a new todo item if input is empty', () => {
-    cy.get('input[name="title"]').clear();
-    cy.get('input[type=submit]').contains('Create new Task').should('be.disabled');
+    cy.addTodo({
+      title: ""
+    });
+    cy.get('.todo-list').first().get('.todo-item').as("todoItems");
+    cy.get('@todoItems').should('have.length', 1);
+  });
+
+  it('Should add a new todo item if input is not empty', () => {
+    cy.addTodo({
+      title: "New todo item"
+    });
+    cy.get('.todo-list').first().get('.todo-item').as("todoItems");
+    cy.get('@todoItems').should('have.length', 2);
+    cy.get('@todoItems').last().should('contain', 'New todo item');
   });
 });
 
@@ -54,8 +73,7 @@ describe('R8UC2: Toggle task todo', () => {
       title: "Hello Task",
       description: "Task 1 description",
       userid: user.uid,
-      url: "dQw4w9WgXcQ",
-      todos: "watch video"
+      url: "dQw4w9WgXcQ"
     });
 
     cy.get('h1').contains('Your tasks, ');
@@ -88,7 +106,6 @@ describe('R8UC2: Toggle task todo', () => {
     cy.get('@titleElem').invoke('css', 'text-decoration').should('not.include', 'line-through');
   });
 });
-
 
 describe('R8UC3: Delete task todo', () => {
   before(() => {
